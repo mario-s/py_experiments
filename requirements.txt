@@ -9,5 +9,8 @@ emoji
 typing_extensions
 pandas
 librosa
-tensorflow
 music21
+scipy==1.2.2
+six>=1.12.0
+grpcio>=1.24.3
+tensorflow
