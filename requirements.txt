@@ -11,3 +11,4 @@ pandas
 librosa
 tensorflow
 music21
+beautifulsoup4
