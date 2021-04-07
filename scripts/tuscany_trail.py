@@ -3,7 +3,7 @@ Web scraping sample: get participants of Tuscany Trail in 2021
 and plot a bar chart by country.
 """
 import os
-import _pickle as pickle
+import json
 import requests
 from bs4 import BeautifulSoup
 import matplotlib.pyplot as plt
@@ -60,16 +60,18 @@ def dump_dict(dic, filename):
     """
     Write dictionary to file.
     """
-    file = open(filename, "wb")
-    pickle.dump(dic, file)
+    with open(filename, 'w') as file:
+        file.write(json.dumps(dic))
     return dic
 
 def load_dict(filename):
     """
     Load dictionary from file.
     """
-    file = open(filename, "rb")
-    return pickle.load(file)
+    dic = {}
+    with open(filename, 'r') as file:
+        dic = json.load(file)
+    return dic
 
 def lookup(filename):
     #if we have a local file, load it
@@ -80,7 +82,7 @@ def lookup(filename):
     return dump_dict(scrap_countries(), filename)
 
 def get_participants():
-    return lookup("participants.pkl")
+    return lookup("participants.json")
 
 def plot(dict):
     #create a bar plot
