@@ -43,7 +43,7 @@ def sort_by_value(freq) -> dict:
     #create a new dictionary out of the list
     return dict(sorted_list)
 
-def scrap_participants():
+def scrap_countries():
     """
     Scrap participants from the website.
     """
@@ -62,6 +62,7 @@ def dump_dict(dic, filename):
     """
     file = open(filename, "wb")
     pickle.dump(dic, file)
+    return dic
 
 def load_dict(filename):
     """
@@ -70,17 +71,16 @@ def load_dict(filename):
     file = open(filename, "rb")
     return pickle.load(file)
 
-def get_participants():
-    filename = "participants.pkl"
+def lookup(filename):
     #if we have a local file, load it
     if os.path.exists(filename):
         return load_dict(filename)
         
     #if participants dump is not present scrap it from the page
-    participants = scrap_participants()
-    #write result to file
-    dump_dict(participants, filename)
-    return participants
+    return dump_dict(scrap_countries(), filename)
+
+def get_participants():
+    return lookup("participants.pkl")
 
 def plot(dict):
     #create a bar plot
