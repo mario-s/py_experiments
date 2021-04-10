@@ -6,3 +6,4 @@ notebooks/ml/datasets/
 dictionary.json
 model.json
 *.zip
+.vscode
