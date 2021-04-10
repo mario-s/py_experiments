@@ -87,14 +87,11 @@ def plot(dic):
     Create a bar plot for the participants.
     """
     _, ax = plt.subplots(figsize=(30,5))
+
     bars = plt.bar(dic.keys(), dic.values())
+    ax.bar_label(bars)
 
-    #add values to each bar
-    for bar in bars:
-        height = bar.get_height()
-        label_x_pos = bar.get_x() + bar.get_width() / 2
-        ax.text(label_x_pos, height, s=f'{height}', ha='center', va='bottom')
-
+    ax.legend()
     plt.title("Participants of Tuscany Trail 2021")
     plt.xlabel('Country')
     plt.ylabel('Participants')
