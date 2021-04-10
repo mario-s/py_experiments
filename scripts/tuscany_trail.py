@@ -1,5 +1,5 @@
 """
-Web scraping sample: get participants of Tuscany Trail in 2021 
+Web scraping sample: get participants of Tuscany Trail in 2021
 and plot a bar chart by country.
 """
 import os
@@ -10,25 +10,28 @@ import matplotlib.pyplot as plt
 
 URL = 'https://www.tuscanytrail.it/en/2021-edition/'
 
-def find_countries(rows) -> list:
+def scrap_rows():
     """
-    grap all countries from the website
+    Scrap all the rows from the table.
     """
-    countries = []
-    for row in rows:
-        cols = row.find_all('td')
-        #last column contains the country
-        country_col = cols[-1]
-        countries.append(country_col.span.contents[0])
-    return countries
+    page = requests.get(URL)
+    soup = BeautifulSoup(page.content, 'html.parser')
 
-def count_frequency(countries) -> dict:
+    table = soup.find('table')
+    trs = table.find_all('tr')
+
+    rows = []
+    for tr in trs:
+        row = [str(c.span.contents[0]) for c in tr.find_all('td')]
+        rows.append(row)
+    return rows
+
+def count_frequency(a_list) -> dict:
     """
-    Count appearance of countries
+    Counts appearance of of unique items in a list and returns it as a dictionary.
     """
     freq = {}
-    for item in countries:
-        key = str(item)
+    for key in a_list:
         if key in freq:
             freq[key] += 1
         else:
@@ -43,51 +46,48 @@ def sort_by_value(freq) -> dict:
     #create a new dictionary out of the list
     return dict(sorted_list)
 
-def scrap_countries():
+def dump_data(data, filename):
     """
-    Scrap participants from the website.
-    """
-    page = requests.get(URL)
-    soup = BeautifulSoup(page.content, 'html.parser')
-
-    table = soup.find('table')
-    rows = table.find_all('tr')
-
-    countries = find_countries(rows)
-    return sort_by_value(count_frequency(countries))
-
-def dump_dict(dic, filename):
-    """
-    Write dictionary to file.
+    Write table data to file.
     """
     with open(filename, 'w') as file:
-        file.write(json.dumps(dic))
-    return dic
+        file.write(json.dumps(data))
+    return data
 
-def load_dict(filename):
+def load_data(filename):
     """
-    Load dictionary from file.
+    Load table data from file.
     """
-    dic = {}
+    data = []
     with open(filename, 'r') as file:
-        dic = json.load(file)
-    return dic
+        data = json.load(file)
+    return data
 
-def lookup(filename):
-    #if we have a local file, load it
+def get_data(filename):
+    """
+    Get the raw data either from local file or from web page.
+    """
     if os.path.exists(filename):
-        return load_dict(filename)
-        
-    #if participants dump is not present scrap it from the page
-    return dump_dict(scrap_countries(), filename)
+        return load_data(filename)
 
-def get_participants():
-    return lookup("participants.json")
+    return dump_data(scrap_rows(), filename)
 
-def plot(dict):
-    #create a bar plot
+def starters_by_country():
+    """
+    Creates a dictionary where the key is the country and the value are the number of
+    participants for that country. The dictionary is sorted by the highest value
+    of participants.
+    """
+    tbl = get_data("tuscany_trail_starters.json")
+    countries = [row[-1] for row in tbl]
+    return sort_by_value(count_frequency(countries))
+
+def plot(dic):
+    """
+    Create a bar plot for the participants.
+    """
     _, ax = plt.subplots(figsize=(30,5))
-    bars = plt.bar(participants.keys(), participants.values())
+    bars = plt.bar(dic.keys(), dic.values())
 
     #add values to each bar
     for bar in bars:
@@ -95,11 +95,12 @@ def plot(dict):
         label_x_pos = bar.get_x() + bar.get_width() / 2
         ax.text(label_x_pos, height, s=f'{height}', ha='center', va='bottom')
 
+    plt.title("Participants of Tuscany Trail 2021")
     plt.xlabel('Country')
     plt.ylabel('Participants')
     plt.grid(axis='y', color='0.95')
 
     plt.show()
 
-participants = get_participants()
+participants = starters_by_country()
 plot(participants)
