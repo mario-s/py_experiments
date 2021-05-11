@@ -23,7 +23,7 @@ def write_gpx(dest_dir, file, segment):
 def split_gpx(source, dest_dir, max_segment_points=500):
     logging.debug(f"Splitting file {source} into files in {dest_dir}")
 
-    file_name = lambda name: lambda count: name + "_" + str(count) + ".gpx"
+    file_name = lambda name: lambda count: f"{name}_{str(count)}.gpx"
     name = Path(source).name.rsplit('.gpx')[0]
     next_name = file_name(name)
 
