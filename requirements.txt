@@ -16,4 +16,4 @@ theano
 tensorflow
 librosa
 music21
-opencv-python==3.4.2.16
+opencv-python==3.4.7.28
