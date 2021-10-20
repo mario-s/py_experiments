@@ -9,44 +9,56 @@ import os
 import gpxpy
 import gpxpy.gpx
 
+class Writer:
 
-def write_gpx(dest_dir, file, segment):
-    logging.debug(f"writing {len(segment.points)} points to {file}")
-    gpx = gpxpy.gpx.GPX()
-    gpx_track = gpxpy.gpx.GPXTrack()
-    gpx.tracks.append(gpx_track)
-    gpx_track.segments.append(segment)
+    def __init__(self, dest_dir):
+        self.dest_dir = dest_dir
 
-    with open(os.path.join(dest_dir, file), "w") as f:
-        f.write(gpx.to_xml())
+    def write(self, file, segment):
+        logging.debug(f"writing {len(segment.points)} points to {file}")
+        gpx = gpxpy.gpx.GPX()
+        gpx_track = gpxpy.gpx.GPXTrack()
+        gpx.tracks.append(gpx_track)
+        gpx_track.segments.append(segment)
 
-def split_gpx(source, dest_dir, max_segment_points=500):
-    logging.debug(f"Splitting file {source} into files in {dest_dir}")
+        with open(os.path.join(self.dest_dir, file), "w") as f:
+            f.write(gpx.to_xml())
 
-    file_name = lambda name: lambda count: f"{name}_{str(count)}.gpx"
-    name = Path(source).name.rsplit('.gpx')[0]
-    next_name = file_name(name)
+class Splitter:
 
-    output_count = 1
-    with open(source, "rb") as f:
-        gpx = gpxpy.parse(f)
+    def __init__(self, dest_dir):
+        self.writer = Writer(dest_dir)
 
-    track_segment = gpxpy.gpx.GPXTrackSegment()
+    def split(self, source, max_segment_points=500):
+        logging.debug(f"Splitting file {source} into files in {self.writer.dest_dir}")
 
-    for track in gpx.tracks:
-        for segment in track.segments:
-            for point in segment.points:
-                track_segment.points.append(point)
+        file_name = lambda name: lambda count: f"{name}_{str(count)}.gpx"
+        name = Path(source).name.rsplit('.gpx')[0]
+        next_name = file_name(name)
 
-                if len(track_segment.points) >= max_segment_points:
-                    write_gpx(dest_dir, next_name(output_count), track_segment)
-                    output_count += 1
-                    track_segment = gpxpy.gpx.GPXTrackSegment()
+        output_count = 1
+        with open(source, "rb") as f:
+            gpx = gpxpy.parse(f)
+
+        track_segment = gpxpy.gpx.GPXTrackSegment()
+
+        for track in gpx.tracks:
+            for segment in track.segments:
+                for point in segment.points:
                     track_segment.points.append(point)
 
-    if len(track_segment.points) > 1:
-        write_gpx(dest_dir, next_name(output_count), track_segment)
+                    if len(track_segment.points) >= max_segment_points:
+                        self.__write(next_name(output_count), track_segment)
+                        output_count += 1
+                        track_segment = gpxpy.gpx.GPXTrackSegment()
+                        track_segment.points.append(point)
 
+        #ensure that we save file when number of all points is below max points per file
+        if len(track_segment.points) > 1:
+            self.__write(next_name(output_count), track_segment)
+
+    def __write(self, name, track_segment):
+        self.writer.write(name, track_segment)
 
 @click.command()
 @click.argument("source")
@@ -58,7 +70,8 @@ def _main(source, output, points, debug):
     if debug:
         logging.basicConfig(level=logging.DEBUG)
 
-    split_gpx(source, output, max_segment_points=points)
+    splitter = Splitter(output)
+    splitter.split(source, max_segment_points=points)
 
 if __name__ == "__main__":
     _main()
