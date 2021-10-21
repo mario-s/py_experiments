@@ -8,3 +8,6 @@ dictionary.json
 model.json
 *.zip
 .vscode/
+bin/
+lib/
+pyvenv.cfg
