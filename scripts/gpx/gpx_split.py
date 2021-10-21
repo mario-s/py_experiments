@@ -68,17 +68,14 @@ class Splitter:
             self.__write(next_name(output_count), track_segment)
 
     def __write(self, name, track_segment):
-        self.__log_track_length(track_segment)
+        self.__log_track_dist(track_segment)
         self.writer.write(name, track_segment)
 
     @debug_enabled
-    def __log_track_length(self, track_segment):
-        start = track_segment.points[0]
-        end = track_segment.points[-1]
-        p1 = (start.latitude, start.longitude)
-        p2 = (end.latitude, end.longitude)
-        dist = hs.haversine(p1, p2)
-        self.logger.debug(f"Track length: {dist} km")
+    def __log_track_dist(self, track_segment):
+        points = [(p.latitude, p.longitude) for p in track_segment.points]
+        dist = hs.haversine(points[0], points[-1])
+        self.logger.debug(f"Direct distance from start to end: {dist} km")
 
 
 @click.command()
