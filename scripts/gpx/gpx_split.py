@@ -3,12 +3,26 @@ This script will split a large gpx file into smaller chunks, depending on th max
 """
 import click
 import logging
-from pathlib import Path
 import os
+from pathlib import Path
 
 import gpxpy
 import gpxpy.gpx
 import haversine as hs
+
+class Distance:
+
+    def points(p1, p2):
+        return hs.haversine(p1, p2)
+
+    def track_length(points):
+        len = 0
+        prev_point = None
+        for p in points:
+            if not prev_point is None:
+                len += Distance.points(prev_point, p)
+            prev_point = p
+        return len
 
 class Writer:
 
@@ -68,14 +82,13 @@ class Splitter:
             self.__write(next_name(output_count), track_segment)
 
     def __write(self, name, track_segment):
-        self.__log_track_dist(track_segment)
+        self.__log_track_len(track_segment)
         self.writer.write(name, track_segment)
 
     @debug_enabled
-    def __log_track_dist(self, track_segment):
+    def __log_track_len(self, track_segment):
         points = [(p.latitude, p.longitude) for p in track_segment.points]
-        dist = hs.haversine(points[0], points[-1])
-        self.logger.debug(f"Direct distance from start to end: {dist} km")
+        self.logger.debug(f"Track length: {Distance.track_length(points)} km")
 
 
 @click.command()
