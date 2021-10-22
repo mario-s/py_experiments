@@ -10,6 +10,15 @@ import gpxpy
 import gpxpy.gpx
 import haversine as hs
 
+#create logger
+logger = logging.getLogger('splitter')
+# create console handler with a debug log level
+ch = logging.StreamHandler()
+formatter = logging.Formatter('- %(name)s - %(levelname)-8s: %(message)s')
+ch.setFormatter(formatter)
+logger.addHandler(ch)
+
+
 class Distance:
 
     def points(p1, p2):
@@ -24,14 +33,17 @@ class Distance:
             prev_point = p
         return len
 
+
 class Writer:
 
     def __init__(self, dest_dir):
         self.dest_dir = dest_dir
 
-    def write(self, file, segment):
-        logging.debug(f"writing {len(segment.points)} points to {file}")
+    def write(self, name, segment):
+        file = f"{name}.gpx"
+        logger.debug(f"writing {len(segment.points)} points to {file}")
         gpx = gpxpy.gpx.GPX()
+        gpx.name = name
         gpx_track = gpxpy.gpx.GPXTrack()
         gpx.tracks.append(gpx_track)
         gpx_track.segments.append(segment)
@@ -39,26 +51,23 @@ class Writer:
         with open(os.path.join(self.dest_dir, file), "w") as f:
             f.write(gpx.to_xml())
 
+
 class Splitter:
 
-    def __init__(self, dest_dir, log):
-        self.writer = Writer(dest_dir)
-        self.logger = logging.getLogger(Splitter.__name__)
-        if log:
-            self.logger.setLevel(logging.DEBUG)
+    def __init__(self, writer):
+        self.writer = writer
 
     def debug_enabled(func):
         def func_wrapper(self, name):
-            if self.logger.isEnabledFor(logging.DEBUG):
+            if logger.isEnabledFor(logging.DEBUG):
                 return func(self, name)
         return func_wrapper
 
     def split(self, source, max_segment_points=500):
-        self.logger.debug(f"Splitting file {source} into files in {self.writer.dest_dir}")
+        logger.debug(f"Splitting file {source} into files in {self.writer.dest_dir}")
 
-        file_name = lambda name: lambda count: f"{name}_{str(count)}.gpx"
-        name = Path(source).name.rsplit('.gpx')[0]
-        next_name = file_name(name)
+        file_name = lambda name: lambda count: f"{name}_{str(count)}"
+        next_name = file_name(Path(source).name.rsplit('.gpx')[0])
 
         output_count = 1
         with open(source, "rb") as f:
@@ -88,7 +97,7 @@ class Splitter:
     @debug_enabled
     def __log_track_len(self, track_segment):
         points = [(p.latitude, p.longitude) for p in track_segment.points]
-        self.logger.debug(f"Track length: {Distance.track_length(points)} km")
+        logger.debug(f"Track length: {Distance.track_length(points)} km")
 
 
 @click.command()
@@ -98,7 +107,12 @@ class Splitter:
     help="Maximum number of points per result file.", default=500)
 @click.option("-l", "--log", help="Log output.", default=False)
 def _main(source, output, points, log):
-    splitter = Splitter(output, log)
+    writer = Writer(output)
+    splitter = Splitter(writer)
+    if log:
+        logger.setLevel(logging.DEBUG)
+        ch.setLevel(logging.DEBUG)
+
     splitter.split(source, max_segment_points=points)
 
 if __name__ == "__main__":
