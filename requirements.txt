@@ -19,4 +19,4 @@ music21
 opencv-python
 #scikit-image
 gpxpy
-haversine
+geopy
