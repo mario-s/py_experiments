@@ -10,15 +10,15 @@ p1 = (52.643605, 13.533826)  # Example latitude and longitude for point 1
 p2 = (52.644021, 13.535629)  # Example latitude and longitude for point 2
 p3 = (52.643826, 13.535369)  # Example latitude and longitude for point 3
 
-# Calculate the geodesic distance between p1 and p2
-line_distance = geodesic(p1, p2).meters
+# Calculate the geodesic distance between p1 and p3
+distance = geodesic(p1, p3).meters
 
 # Calculate the azimuth (bearing) from p1 to p2
 g = GeoDict.WGS84.Inverse(p1[0], p1[1], p2[0], p2[1])
-bearing_p1_p2 = g['azi1']
+bearing = g['azi1']
 
 # Calculate the geodesic distance and destination point x from p1 to p3
-dest_point = GeoDict.WGS84.Direct(p1[0], p1[1], bearing_p1_p2, geodesic(p1, p3).meters)
+dest_point = GeoDict.WGS84.Direct(p1[0], p1[1], bearing, distance)
 x = (dest_point['lat2'], dest_point['lon2'])
 print(f"Interception point x: {x}")
 
