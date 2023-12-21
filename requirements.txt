@@ -8,7 +8,7 @@ emoji
 typing_extensions
 matplotlib
 pandas
-scipy==1.2.2
+scipy==1.10.0
 grpcio>=1.24.3
 keras
 theano
